@@ -1,7 +1,7 @@
 /**
  * Step 1 of the event editor: what the event is and where it happens,
  * including an optional point on the map (coordinates, "Usar minha
- * localização" and a map preview) grouped in a box.
+ * localização" and a map where the point is clicked) grouped in a box.
  *
  * @module
  */
@@ -13,6 +13,7 @@ import { MdMyLocation } from "react-icons/md";
 import { ErrorAlert } from "@/components/ui/Feedback";
 import type { Result } from "@/lib/result";
 import { HasEventErrors, ValidateCoordinates, type EventFormData, type EventFormErrors } from "@/utils/validation/EventValidation";
+import { LocationPicker } from "./LocationPicker";
 import {
   FIELD, FIELD_BOX, FIELD_BOX_LEGEND, FIELD_HINT, FIELD_LABEL, FieldA11y, FieldBoxBorder, FieldError, FieldId,
 } from "./EventFormField";
@@ -33,13 +34,6 @@ export type EventFormBasicsProps = {
   onLocate: () => Promise<Result<Coordinates, string>>;
 };
 
-/** OpenStreetMap embed centred on the coordinates, with a marker. */
-export function MapEmbedUrl({ latitude, longitude }: Coordinates): string {
-  const delta = 0.005;
-  const bbox = [longitude - delta, latitude - delta, longitude + delta, latitude + delta].join(",");
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${latitude},${longitude}`;
-}
-
 /** Title, description, location and coordinates. */
 export function EventFormBasics({ idPrefix, data, errors, disabled, onChange, onLocate }: EventFormBasicsProps) {
   const [locating, setLocating] = useState(false);
@@ -50,7 +44,14 @@ export function EventFormBasics({ idPrefix, data, errors, disabled, onChange, on
 
   const latitude = data.latitude.trim();
   const longitude = data.longitude.trim();
-  const showMap = latitude !== "" && longitude !== "" && !HasEventErrors(ValidateCoordinates(data));
+  const point = latitude !== "" && longitude !== "" && !HasEventErrors(ValidateCoordinates(data))
+    ? { latitude: Number(latitude), longitude: Number(longitude) }
+    : null;
+
+  function pick({ latitude, longitude }: Coordinates) {
+    setLocateError("");
+    onChange({ latitude: latitude.toFixed(6), longitude: longitude.toFixed(6) });
+  }
 
   async function locate() {
     setLocating(true);
@@ -61,7 +62,7 @@ export function EventFormBasics({ idPrefix, data, errors, disabled, onChange, on
       setLocateError(position.error);
       return;
     }
-    onChange({ latitude: position.value.latitude.toFixed(6), longitude: position.value.longitude.toFixed(6) });
+    pick(position.value);
   }
 
   return (
@@ -115,7 +116,7 @@ export function EventFormBasics({ idPrefix, data, errors, disabled, onChange, on
           Ponto no mapa <span className="font-normal text-fg-3">(opcional)</span>
         </legend>
         <p id={coordinatesHint} className={FIELD_HINT}>
-          Ajudam as pessoas a encontrar o local no mapa. Use graus decimais, com ponto.
+          Clique no mapa para marcar o local e arraste o marcador para ajustar, ou digite as coordenadas em graus decimais, com ponto.
         </p>
 
         <div className="flex flex-wrap items-end gap-2.5">
@@ -160,14 +161,7 @@ export function EventFormBasics({ idPrefix, data, errors, disabled, onChange, on
         <FieldError fieldId={id("longitude")} error={errors.longitude} />
         <ErrorAlert>{locateError}</ErrorAlert>
 
-        {showMap && (
-          <iframe
-            title="Mapa com a localização do evento"
-            src={MapEmbedUrl({ latitude: Number(latitude), longitude: Number(longitude) })}
-            className="h-40 w-full rounded-2xl border border-line sm:h-48"
-            loading="lazy"
-          />
-        )}
+        <LocationPicker value={point} onPick={pick} disabled={disabled} label="Mapa para marcar a localização do evento" />
       </fieldset>
     </div>
   );

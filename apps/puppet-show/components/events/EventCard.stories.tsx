@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, userEvent } from "storybook/test";
 import type { FeedCard } from "@/domain/feed";
+import { APPROVED_BANNER } from "@/components/ui/storyImages";
 import { EventCard } from "./EventCard";
 
 const CARD: FeedCard = {
@@ -118,5 +119,85 @@ export const LongText: Story = {
       await expect(box.left).toBeGreaterThanOrEqual(cardBox.left);
       await expect(box.right).toBeLessThanOrEqual(cardBox.right);
     }
+  },
+};
+
+/** With a banner: the photo card, the badge and the heart over the picture; the description stays on the details page. */
+export const WithBanner: Story = {
+  globals: { viewport: { value: "desktop", isRotated: false } },
+  decorators: [(Story) => <div className="w-[340px]"><Story /></div>],
+  args: { card: { ...CARD, banner: APPROVED_BANNER } },
+  play: async ({ canvasElement, canvas }) => {
+    await expect(canvasElement.querySelector("img")).not.toBeNull();
+    await expect(canvas.queryByText(CARD.description)).toBeNull();
+  },
+};
+
+/**
+ * No banner: instead of an empty gradient block, the date tile sits beside the
+ * heart over a faint wash, and the freed room shows the start of the description.
+ */
+export const NoBanner: Story = {
+  globals: { viewport: { value: "desktop", isRotated: false } },
+  decorators: [(Story) => <div className="w-[340px]"><Story /></div>],
+  args: {
+    card: {
+      ...CARD,
+      title: "Uso Racional de Antimicrobianos",
+      description:
+        "Palestra aberta sobre resistência bacteriana e o uso responsável de antibióticos, com profissionais do Hospital Geral Clériston Andrade e professores do curso de Farmácia. Haverá emissão de certificado de 4 horas.",
+      location: "Auditório IV - módulo 6 - UEFS (Universidade Estadual de Feira de Santana)",
+      schedule: [{ date: "2026-11-13", startTime: "08:00" }],
+      voteCount: 1,
+    },
+  },
+  play: async ({ canvasElement, canvas }) => {
+    await expect(canvasElement.querySelector("img")).toBeNull();
+    await expect(canvas.getByText("13")).toBeVisible();
+    await expect(canvas.getByText("nov")).toBeVisible();
+    await expect(canvas.getByText(/^Palestra aberta sobre resistência bacteriana/)).toBeVisible();
+    await expect(canvas.getByText("A partir das 08:00")).toBeVisible();
+
+    /** The tile is a small square, not the 16:10 cover the photo takes. */
+    const box = canvas.getByText("13").parentElement?.getBoundingClientRect();
+    await expect(box?.height).toBeLessThanOrEqual(64);
+    await expect(box?.width).toBeLessThanOrEqual(64);
+  },
+};
+
+/** No banner and no days: the tile shows a calendar icon and the time reads "Sem data definida". */
+export const NoBannerNoDate: Story = {
+  globals: { viewport: { value: "desktop", isRotated: false } },
+  decorators: [(Story) => <div className="w-[340px]"><Story /></div>],
+  args: { card: { ...CARD, schedule: [] } },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText("Sem data definida")).toBeVisible();
+    await expect(canvas.getByText(CARD.description)).toBeVisible();
+  },
+};
+
+/** On phones the tile fills the thumbnail's square with the day; the description is left for the details page. */
+export const NoBannerOnPhone: Story = {
+  globals: { viewport: { value: "mobile1", isRotated: false } },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText("15")).toBeVisible();
+    await expect(canvas.getByText(CARD.description)).not.toBeVisible();
+  },
+};
+
+/** Cards with and without a banner side by side in the feed's grid, at the same height. */
+export const MixedInGrid: Story = {
+  globals: { viewport: { value: "desktop", isRotated: false } },
+  parameters: { layout: "fullscreen" },
+  render: (args) => (
+    <ul className="grid gap-5 p-6 [grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr))]">
+      <li><EventCard {...args} card={{ ...CARD, id: "evt-1", banner: APPROVED_BANNER }} /></li>
+      <li><EventCard {...args} card={{ ...CARD, id: "evt-2", title: "Uso Racional de Antimicrobianos", tags: [] }} /></li>
+      <li><EventCard {...args} card={{ ...CARD, id: "evt-3", title: "Sarau Literário", description: "Leituras abertas.", schedule: [{ date: "2026-10-20" }] }} /></li>
+    </ul>
+  ),
+  play: async ({ canvas }) => {
+    const heights = canvas.getAllByRole("article").map((card) => Math.round(card.getBoundingClientRect().height));
+    await expect(new Set(heights).size).toBe(1);
   },
 };

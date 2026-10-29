@@ -97,3 +97,26 @@ export const DaysWithGaps: Story = {
     await expect(canvas.getByText("A partir das 09:00")).toBeInTheDocument();
   },
 };
+
+/** A long title and place stay inside the card instead of overflowing it. */
+export const LongText: Story = {
+  globals: { viewport: { value: "desktop", isRotated: false } },
+  decorators: [(Story) => <div className="w-[310px]"><Story /></div>],
+  args: {
+    card: {
+      ...CARD,
+      title: "Semana Nacional de Conscientização sobre o Uso Racional de Antimicrobianos",
+      location: "Auditório do Módulo 6 - UEFS (Universidade Estadual de Feira de Santana) - 13 de novembro de 2026",
+    },
+  },
+  play: async ({ canvas }) => {
+    const card = canvas.getByRole("article");
+    await expect(getComputedStyle(card).display).toBe("flex");
+    const cardBox = card.getBoundingClientRect();
+    for (const text of [canvas.getByRole("link", { name: /Antimicrobianos$/ }), canvas.getByText(/Auditório do Módulo 6/)]) {
+      const box = text.getBoundingClientRect();
+      await expect(box.left).toBeGreaterThanOrEqual(cardBox.left);
+      await expect(box.right).toBeLessThanOrEqual(cardBox.right);
+    }
+  },
+};

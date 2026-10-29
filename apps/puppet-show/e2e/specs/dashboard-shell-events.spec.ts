@@ -53,7 +53,7 @@ async function FillBasics(page: Page, title: string, coordinates: boolean): Prom
   if (coordinates) {
     await page.getByLabel("Latitude").fill("-12.2");
     await page.getByLabel("Longitude").fill("-38.97");
-    await page.getByTitle("Mapa com a localização do evento").waitFor();
+    await page.getByRole("region", { name: "Mapa para marcar a localização do evento" }).waitFor();
   }
   await page.getByRole("button", { name: "Avançar" }).click();
   await page.getByRole("heading", { name: /Etapa 2 de 3/ }).waitFor();

@@ -35,6 +35,8 @@ export default defineConfig({
       },
       {
         extends: true,
+        /** Leaflet is only imported at runtime (see LocationPicker); prebundle it so the browser does not reload mid-test to optimize it. */
+        optimizeDeps: { include: ["leaflet"] },
         plugins: [
           storybookTest({ configDir: path.join(import.meta.dirname, ".storybook") }),
         ],

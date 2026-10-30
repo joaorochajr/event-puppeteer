@@ -64,6 +64,8 @@ export type EventDetailsProps = {
   error: string;
   onToggleLike: () => void;
   onShare: () => void;
+  /** While the system share sheet opened by `onShare` is still open. */
+  shareBusy: boolean;
   onReport: () => void;
   onHide: () => void;
   onUnhide: () => void;
@@ -171,7 +173,7 @@ const STACKED = "min-h-16 flex-col gap-1 rounded-2xl px-1 text-[13px]";
 /** The details page body. */
 export function EventDetails({
   event, likes, likeBusy = false, canModerate, isCreator, canDelete, reported, loginPrompt, loginRedirect, notice, error,
-  onToggleLike, onShare, onReport, onHide, onUnhide, onDelete, bannerBusy, onReplaceBanner, onRemoveBanner, today,
+  onToggleLike, onShare, shareBusy, onReport, onHide, onUnhide, onDelete, bannerBusy, onReplaceBanner, onRemoveBanner, today,
 }: EventDetailsProps) {
   const dates = DatesTitle(event);
   const start = StartTitle(event);
@@ -270,8 +272,10 @@ export function EventDetails({
               onToggle={onToggleLike}
               className={STACKED}
             />
-            <button type="button" onClick={onShare} className={`button focus-ring ${STACKED}`}>
-              <MdShare aria-hidden className="icon" />
+            <button type="button" onClick={onShare} disabled={shareBusy} aria-busy={shareBusy} className={`button focus-ring ${STACKED}`}>
+              {shareBusy
+                ? <span aria-hidden className="icon animate-spin rounded-full border-2 border-current border-t-transparent" />
+                : <MdShare aria-hidden className="icon" />}
               Compartilhar
             </button>
             {canReport && (

@@ -116,6 +116,13 @@ export function EventDetailsContainer({ eventId }: EventDetailsContainerProps) {
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [confirmError, setConfirmError] = useState("");
   const [bannerBusy, setBannerBusy] = useState(false);
+  /**
+   * Whether a share sheet is open. Browsers refuse a second `navigator.share`
+   * until the first settles ("An earlier share has not yet completed"), so the
+   * button waits; the ref also stops a double tap before React re-renders.
+   */
+  const sharingRef = useRef(false);
+  const [sharing, setSharing] = useState(false);
 
   const detail = useMemo(
     () => (event.value === null || tags.value === null || labels.value === null
@@ -188,15 +195,21 @@ export function EventDetailsContainer({ eventId }: EventDetailsContainerProps) {
   };
 
   const share = async () => {
+    if (sharingRef.current) return;
     clearMessages();
     const url = window.location.href;
     if (typeof navigator.share === "function") {
+      sharingRef.current = true;
+      setSharing(true);
       try {
         await navigator.share({ title: detail.title, text: `Confira o evento “${detail.title}”`, url });
         return setNotice("Evento compartilhado.");
       } catch (cause) {
         if (cause instanceof DOMException && cause.name === "AbortError") return setNotice("Compartilhamento cancelado.");
         return setError(`Não foi possível compartilhar: ${cause instanceof Error ? cause.message : String(cause)}`);
+      } finally {
+        sharingRef.current = false;
+        setSharing(false);
       }
     }
     if (navigator.clipboard === undefined) return setError(`Este navegador não permite copiar automaticamente. Copie o endereço: ${url}`);
@@ -299,6 +312,7 @@ export function EventDetailsContainer({ eventId }: EventDetailsContainerProps) {
         error={error === "" ? organizationError : error}
         onToggleLike={() => void toggleLike()}
         onShare={() => void share()}
+        shareBusy={sharing}
         onReport={openReport}
         onHide={() => { clearMessages(); setConfirmError(""); setConfirm("hide"); }}
         onUnhide={() => { clearMessages(); setConfirmError(""); setConfirm("hide"); }}

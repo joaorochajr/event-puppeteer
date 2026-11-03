@@ -83,14 +83,25 @@ export const CoordinateErrors: Story = {
   },
 };
 
-/** "Usar minha localização" fills the coordinates and shows the map preview. */
+/** "Usar minha localização" fills the coordinates. */
 export const LocateSuccess: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.click(canvas.getByRole("button", { name: "Usar minha localização" }));
     await expect(args.onLocate).toHaveBeenCalled();
     await waitFor(() => expect(canvas.getByLabelText("Latitude")).toHaveValue(-12.2));
     await expect(canvas.getByLabelText("Longitude")).toHaveValue(-38.97);
-    await expect(canvas.getByTitle("Mapa com a localização do evento")).toBeInTheDocument();
+  },
+};
+
+/** Clicking the map fills the coordinates with the clicked point. */
+export const PickOnMap: Story = {
+  play: async ({ canvas }) => {
+    const map = await canvas.findByRole("region", { name: "Mapa para marcar a localização do evento" });
+    await waitFor(() => expect(map).toHaveClass("leaflet-container"));
+    await userEvent.click(map);
+    await waitFor(() => expect(canvas.getByLabelText("Latitude")).not.toHaveValue(null));
+    expect(Number((canvas.getByLabelText("Latitude") as HTMLInputElement).value)).toBeCloseTo(-12.2, 0);
+    expect(Number((canvas.getByLabelText("Longitude") as HTMLInputElement).value)).toBeCloseTo(-38.97, 0);
   },
 };
 
@@ -102,7 +113,6 @@ export const LocateDenied: Story = {
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole("button", { name: "Usar minha localização" }));
     await expect(await canvas.findByRole("alert")).toHaveTextContent(/Permissão de localização negada/);
-    await expect(canvas.queryByTitle("Mapa com a localização do evento")).not.toBeInTheDocument();
   },
 };
 
@@ -137,7 +147,6 @@ export const PublishFullEvent: Story = {
   play: async ({ args, canvas }) => {
     await userEvent.type(canvas.getByLabelText("Latitude"), "-12.2");
     await userEvent.type(canvas.getByLabelText("Longitude"), "-38.97");
-    await expect(canvas.getByTitle("Mapa com a localização do evento")).toBeInTheDocument();
     await FillBasics(canvas);
 
     SetDate(canvas.getByLabelText("Data"), "2026-10-12");

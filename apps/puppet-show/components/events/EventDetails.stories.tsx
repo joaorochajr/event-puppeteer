@@ -46,6 +46,7 @@ const meta = {
     error: "",
     onToggleLike: fn(),
     onShare: fn(),
+    shareBusy: false,
     onReport: fn(),
     onHide: fn(),
     onUnhide: fn(),
@@ -171,6 +172,19 @@ export const AlreadyReported: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByRole("button", { name: "Denunciado" })).toBeDisabled();
     await expect(canvas.getByRole("alert")).toHaveTextContent("Você já denunciou este evento.");
+  },
+};
+
+/** The share sheet is still open: a spinner replaces the icon and the button waits instead of opening a second one. */
+export const Sharing: Story = {
+  args: { shareBusy: true, onShare: fn() },
+  play: async ({ canvas, args }) => {
+    const button = canvas.getByRole("button", { name: "Compartilhar" });
+    await expect(button).toBeDisabled();
+    await expect(button).toHaveAttribute("aria-busy", "true");
+    await expect(button.querySelector(".animate-spin")).toBeVisible();
+    await userEvent.click(button);
+    await expect(args.onShare).not.toHaveBeenCalled();
   },
 };
 

@@ -110,5 +110,5 @@ export const EmptyFeed: Story = {
 
 /** The site address isn't configured: the QR panel says so (visible on large screens). */
 export const MissingSiteUrl: Story = {
-  args: { qr: { ok: false, error: "Endereço do site não configurado: defina NEXT_PUBLIC_SITE_URL para exibir o QR Code." } },
+  args: { qr: { ok: false, error: "Não foi possível descobrir o endereço do site: a requisição não informou o host." } },
 };

@@ -5,12 +5,12 @@
  */
 
 import { HomeContainer } from "@/components/home/containers/HomeContainer";
-import { SiteQrCode } from "@/components/qrcode/siteQrCode";
+import { RequestSiteQrCode } from "@/components/qrcode/requestSiteQrCode";
 
-/** Reads the site address on every request, so the QR code follows the configuration. */
+/** Reads the address from each request, so the QR code is always where the app is served. */
 export const dynamic = "force-dynamic";
 
 /** Builds the QR code on the server and hands it to the live feed. */
 export default async function HomePage() {
-  return <HomeContainer qr={await SiteQrCode(process.env.NEXT_PUBLIC_SITE_URL)} />;
+  return <HomeContainer qr={await RequestSiteQrCode()} />;
 }

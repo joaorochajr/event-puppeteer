@@ -83,7 +83,7 @@ export const Empty: Story = {
 export const Errors: Story = {
   args: {
     errors: ["Não foi possível atualizar os eventos. Não foi possível falar com o servidor.", null],
-    qr: { ok: false, error: "Endereço do site não configurado: defina NEXT_PUBLIC_SITE_URL para exibir o QR Code." },
+    qr: { ok: false, error: "Não foi possível descobrir o endereço do site: a requisição não informou o host." },
   },
   play: async ({ canvas }) => {
     await expect(canvas.getAllByRole("alert")).toHaveLength(2);

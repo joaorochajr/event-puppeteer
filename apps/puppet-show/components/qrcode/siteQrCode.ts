@@ -2,9 +2,9 @@
  * The QR code that takes people from a big screen to the site on their phone.
  *
  * Generated on the server with the `qrcode` package as an SVG string, so the
- * page loads nothing from outside. The address comes from
- * `NEXT_PUBLIC_SITE_URL`; there is no default, a missing or invalid value is
- * reported so the screen can say what to configure.
+ * page loads nothing from outside. The address is the one the app is being
+ * served from (see {@link RequestOrigin}); a missing or invalid address is
+ * reported so the screen can say what went wrong.
  *
  * @module
  */
@@ -15,17 +15,30 @@ import { Err, Ok, type Result } from "@/lib/result";
 /** A ready QR code, or the reason (for the person) it couldn't be made. */
 export type SiteQr = Result<{ url: string; svg: string }, string>;
 
-/** Shown when `NEXT_PUBLIC_SITE_URL` is not set. */
+/** Shown when the request does not say which host it was addressed to. */
 export const MISSING_SITE_URL_MESSAGE =
-  "Endereço do site não configurado: defina NEXT_PUBLIC_SITE_URL para exibir o QR Code.";
+  "Não foi possível descobrir o endereço do site: a requisição não informou o host.";
 
 /**
- * Builds the QR code for `url`; pages pass `process.env.NEXT_PUBLIC_SITE_URL`
- * on every request, so it follows the configuration.
+ * The address the app is served from, taken from the request: the host the
+ * client asked for (`x-forwarded-host` when a proxy sits in front, else
+ * `host`) and the protocol the proxy reports in `x-forwarded-proto`. Without
+ * that header no proxy terminated TLS, so the request reached the server as
+ * plain `http`. When a header lists several values (a chain of proxies) the
+ * first one, the client's own, is used.
  */
-export async function SiteQrCode(url: string | undefined): Promise<SiteQr> {
-  if (url === undefined || url.trim() === "") return Err(MISSING_SITE_URL_MESSAGE);
-  if (!URL.canParse(url)) return Err(`NEXT_PUBLIC_SITE_URL não é um endereço válido: "${url}".`);
+export function RequestOrigin(headers: Headers): Result<string, string> {
+  const first = (name: string) => headers.get(name)?.split(",")[0]?.trim() || undefined;
+  const host = first("x-forwarded-host") ?? first("host");
+  if (host === undefined) return Err(MISSING_SITE_URL_MESSAGE);
+  const origin = `${first("x-forwarded-proto") ?? "http"}://${host}`;
+  if (!URL.canParse(origin)) return Err(`O endereço do site não é válido: "${origin}".`);
+  return Ok(origin);
+}
+
+/** Builds the QR code for `url`, the address the app is served from. */
+export async function SiteQrCode(url: string): Promise<SiteQr> {
+  if (!URL.canParse(url)) return Err(`O endereço do site não é válido: "${url}".`);
 
   try {
     const svg = await QRCode.toString(url, {

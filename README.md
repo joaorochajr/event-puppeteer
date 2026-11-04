@@ -1,5 +1,6 @@
 # Event Puppeteer
 
+
 A system for publishing institutional events and showing them on kiosk displays. People browse and manage events on the web, an API keeps the data and the rules, and a small C agent on each kiosk keeps its display up to date.
 
 The vocabulary used across the project (Puppeteer, Puppet, Device, Public Feed, Shadow Ban and others) is defined in [CONTEXT.md](CONTEXT.md). Use those terms in code, docs and issues.

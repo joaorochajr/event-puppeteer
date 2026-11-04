@@ -22,7 +22,7 @@ The broker is only an accelerator. Every heartbeat answer carries `commandsWaiti
 | Status check        | every 15 s pending, 60 s active, hourly when rejected        |
 | Event feed          | every 5 minutes (a failed refresh retries after 60 s)        |
 | Command fetch       | on boot, on `commandsWaiting`, on a Wake-up, after subscribing |
-| Broker connection   | reconnects after 10 s, doubling up to 300 s, plus up to 50% jitter |
+| Broker connection   | reconnects after 10 s, doubling up to 300 s, plus up to 50% jitter; a connection silent for 20 s before its subscription is acknowledged is dropped and retried |
 
 An idle active Device sends about **252 requests per hour** to Puppeteer (180 heartbeats, 60 status checks, 12 feed refreshes), down from about 612 when it also polled Commands every 10 s. The MQTT connection is not a Puppeteer request.
 
@@ -30,7 +30,7 @@ The agent loop stays single-threaded: it waits on the broker socket, and on term
 
 **Outages.** When the broker connection is lost or cannot be made, the Puppet reconnects with the backoff above and logs exactly one error line for the outage and one info line when the broker is back, however many attempts it takes. An outage does not make the heartbeat report `degraded`: Commands still arrive through the heartbeat. After a (re)subscription the Puppet fetches Commands once, to catch Wake-ups sent while it could not hear them. If the Device's Organization changes it moves the subscription to the new topic, and it drops the connection when it leaves the active phase.
 
-**Settings.** The broker host, port and TLS are compile-time constants (CMake options `PUPPET_WAKEUP_BROKER_HOST`, default `broker.hivemq.com`; `PUPPET_WAKEUP_BROKER_PORT`, default `8883`; `PUPPET_WAKEUP_BROKER_TLS`, default `ON`). The Puppet reads no environment variables for them. With TLS on, the broker's certificate is verified against the system certificate store.
+**Settings.** The broker host, port and TLS are compile-time constants (CMake options `PUPPET_WAKEUP_BROKER_HOST`, default `broker.hivemq.com`; `PUPPET_WAKEUP_BROKER_PORT`, default `8883`; `PUPPET_WAKEUP_BROKER_TLS`, default `ON`). The Puppet reads no environment variables for them. With TLS on, the broker's certificate is verified against the system certificate store. Puppeteer publishes to a fixed broker (`WAKEUP_BROKER_URL` in `apps/puppeteer/src/io/wakeup/mqtt.ts`, `broker.hivemq.com:8883` over TLS), so a build that changes these options must change it too; otherwise the Puppet never hears a Wake-up and falls back to the heartbeat (up to 20 s).
 
 ### Only one agent per Device
 
@@ -93,7 +93,11 @@ The binary is downloaded next to the executable (`<executable>.update`). It is i
 
 The Puppet's user must be able to write the executable's directory.
 
-Displaying events on screen is not implemented yet. The feed is stored under the `feed.events` key for a future display.
+#### Not implemented yet
+
+- **Displaying events on screen.** The feed is stored under the `feed.events` key for a future display.
+- **Automatic Rollback.** The vocabulary for an update that is not confirmed (Confirmed binary, Last known good binary, Confirmation window, Rollback) is in [CONTEXT.md](CONTEXT.md), but today an `update` installs the new binary, reports success and restarts into it with no confirmation or way back. Reporting the `update` Command only once the new binary is confirmed is proposed in issue #46.
+- **`uninstall` Command and recognizing a reinstalled Device** are under investigation (#18, #17).
 
 ## Configuration
 
@@ -119,6 +123,27 @@ The Device's identity is always `/etc/machine-id`; the Puppet fails if it is mis
 
 The data directory must be on persistent storage. Losing it makes the Device enroll again as a new pending Device.
 
+## Code map
+
+Everything is plain C with one translation unit per binary (`src/main.c`, `src/test-runner.c`); see [docs/coding-standards.md](docs/coding-standards.md).
+
+| Module | Role |
+|---|---|
+| `main` | Entry point: decides terminal or agent, maps failures to exit statuses |
+| `agent` | The agent loop (imperative shell) and the Command runner |
+| `agent/agent-schedule` | Pure state machine: phases, due tasks, backoff |
+| `wakeup` | libmosquitto subscription, driven from the single-threaded loop |
+| `protocol`, `json` | Wire format with Puppeteer and the JSON parser it uses |
+| `http` | libcurl client (`GET`, `POST`, capped downloads) |
+| `device-store`, `storage/mmkv` | Credentials and feed in MMKV |
+| `config` | Build-time settings and `/etc/machine-id` |
+| `installer`, `installation`, `watcher`, `watch` | The Installation: checks, repair, elevation, journal watch |
+| `agent-lock`, `lifecycle` | One agent per Device; termination signals |
+| `audit-trail` | The append-only Device Audit Trail |
+| `update/self-update`, `crypto/sha256` | Download verification and the atomic replacement |
+| `commands/command-executor` | `systemctl reboot` and `poweroff` |
+| `stats` | Telemetry for `request_telemetry` |
+
 ## Prerequisites
 
 To build and run this project natively, ensure you have the following installed on your system:
@@ -135,6 +160,8 @@ To build and run this project natively, ensure you have the following installed 
 On the Device itself only the libcurl runtime (`libcurl4` on Debian, which brings libssl) is needed: libmosquitto is part of the binary, so a Puppet that updates itself never depends on a library the Device may lack.
 
 ## Native Build Instructions
+
+The version the Puppet reports (telemetry, logs, the Audit Trail) is the `VERSION` of `project(puppet ...)` in `CMakeLists.txt`; bump it for every binary rolled out through self-update, since the Audit Trail's latest `binary` entry is what tells which one a Device runs.
 
 1. Open your terminal and navigate to the root of the project directory.
 2. Configure the project:
@@ -192,7 +219,7 @@ Running the binary on a developer machine installs the service there too, after 
 
 ## Running the Tests
 
-Unit tests cover the pure modules: JSON, the device protocol, configuration, the agent schedule, SHA-256 and update compatibility checks. They need neither a network nor Puppeteer.
+Unit tests cover the pure modules: JSON, the device protocol, configuration, the agent schedule (including the Wake-up broker rules), the agent lock, the Audit Trail, the Installation's checks, SHA-256, update compatibility checks and the parsing of the journal the terminal watches. They need neither a network, Puppeteer, systemd nor root. Each module's tests sit next to it as `*.test.c`, and `src/test-runner.c` lists the suites.
 
 ```bash
 cmake --build build --target puppet-tests
@@ -218,6 +245,8 @@ cmake --build build-linux-arm32
 ```
 
 ### Android ARM32 (armeabi-v7a)
+
+The Installation, the Audit Trail's paths and the `restart`/`shutdown` Commands assume Linux with systemd, so an Android build is a compile target only, not a supported Device.
 
 **Prerequisites (Host Machine):**
 - Android NDK installed.

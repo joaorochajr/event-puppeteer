@@ -22,7 +22,7 @@ const BANNER = "https://res.cloudinary.com/demo/image/authenticated/s--abc--/img
 
 test("titles the tab with the event and describes when and where", () => {
   const head = EventMetadata(EVENT, PAGE);
-  expect(head.title).toBe("Uso Racional de Antimicrobianos | Mural de Eventos");
+  expect(head.title).toBe("Uso Racional de Antimicrobianos | Vem aí");
   expect(head.description).toBe(
     "sexta-feira, 13 de novembro, às 08:00 · Auditório IV - módulo 6. Desafios do uso de antimicrobianos e estratégias para a Saúde Única.",
   );
@@ -30,7 +30,7 @@ test("titles the tab with the event and describes when and where", () => {
     title: "Uso Racional de Antimicrobianos",
     description: head.description,
     url: PAGE,
-    siteName: "Mural de Eventos",
+    siteName: "Vem aí",
     locale: "pt_BR",
   });
 });

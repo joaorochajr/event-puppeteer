@@ -84,7 +84,7 @@ export function EventCover({ title, badge, when, location, organization, palette
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: "auto" }}>
         {when !== null && <span style={{ fontSize: 34 }}>{when}</span>}
         {location !== "" && <span style={{ opacity: 0.85 }}>{location}</span>}
-        <span style={{ marginTop: 28, fontSize: 24, opacity: 0.7 }}>{`Mural de Eventos · ${organization}`}</span>
+        <span style={{ marginTop: 28, fontSize: 24, opacity: 0.7 }}>{`Vem aí · ${organization}`}</span>
       </div>
     </div>
   );

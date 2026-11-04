@@ -15,7 +15,7 @@ import { LongDate } from "@/utils/date";
 import { COVER_SIZE, type EventCoverProps } from "./EventCover";
 
 /** Name of the site, after the page name in the tab title and in previews. */
-export const SITE_NAME = "Mural de Eventos";
+export const SITE_NAME = "Vem aí";
 
 /** Head of an event page whose event the public can't see (or that couldn't be read). */
 export const UNKNOWN_EVENT_METADATA: Metadata = { title: `Evento | ${SITE_NAME}` };

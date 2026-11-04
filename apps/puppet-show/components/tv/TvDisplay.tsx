@@ -366,11 +366,11 @@ export function TvDisplay({ branding, status, events, errors, qr, today }: TvDis
             </span>
           ) : (
             <span aria-hidden className="center shrink-0 bg-accent font-display font-extrabold text-on-accent" style={{ width: U(64), height: U(64), borderRadius: U(16), fontSize: U(19) }}>
-              {Monogram(name ?? "Mural de Eventos")}
+              {Monogram(name ?? "Vem aí")}
             </span>
           )}
           <h1 id="tv-title" className="min-w-0 font-display font-bold lg:truncate" style={{ fontSize: U(36), letterSpacing: "-0.01em" }}>
-            {name === null ? "Mural de Eventos" : <>Eventos <span className="t3 font-semibold">· {name}</span></>}
+            {name === null ? "Vem aí" : <>Eventos <span className="t3 font-semibold">· {name}</span></>}
           </h1>
         </div>
         <Clock />

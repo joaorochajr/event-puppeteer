@@ -47,7 +47,7 @@ export const Anonymous: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByRole("link", { name: /Universidade Estadual/ })).toHaveAttribute("href", "/");
     const links = Visible(canvas.getAllByRole("link")).map((link) => link.textContent);
-    await expect(links).toEqual(["Mural de EventosUniversidade Estadual", "Entrar", "Criar conta"]);
+    await expect(links).toEqual(["Vem aíUniversidade Estadual", "Entrar", "Criar conta"]);
     await expect(canvas.getByRole("button", { name: /Usar tema/ })).toBeInTheDocument();
   },
 };
@@ -88,7 +88,7 @@ export const Superadmin: Story = {
     auth: { status: "authenticated", user: { id: "s", firstName: "Sara", lastName: "Super", normalizedName: "sara super", email: "s@x", role: "Superadmin", isShadowBanned: false } },
   },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole("link", { name: "Mural de Eventos" })).toBeInTheDocument();
+    await expect(canvas.getByRole("link", { name: "Vem aí" })).toBeInTheDocument();
   },
 };
 

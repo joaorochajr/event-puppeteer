@@ -30,7 +30,7 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "Mural de Eventos",
+  title: "Vem aí",
   description: "Publique e descubra eventos perto de você.",
 };
 

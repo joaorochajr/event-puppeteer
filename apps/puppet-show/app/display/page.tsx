@@ -10,7 +10,7 @@ import { SiteQrCode } from "@/components/qrcode/siteQrCode";
 import { TvDisplayContainer } from "@/components/tv/TvDisplayContainer";
 
 export const metadata: Metadata = {
-  title: "Modo TV | Mural de Eventos",
+  title: "Modo TV | Vem aí",
 };
 
 /** Reads the site address on every request, so the QR code follows the configuration. */

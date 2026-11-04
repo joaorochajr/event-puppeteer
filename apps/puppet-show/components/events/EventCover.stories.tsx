@@ -37,7 +37,7 @@ export const OneDay: Story = {
     await expect(canvas.getByText("nov")).toBeVisible();
     await expect(canvas.getByText("Uso Racional de Antimicrobianos")).toBeVisible();
     await expect(canvas.getByText("sexta-feira, 13 de novembro, às 08:00")).toBeVisible();
-    await expect(canvas.getByText("Mural de Eventos · UEFS")).toBeVisible();
+    await expect(canvas.getByText("Vem aí · UEFS")).toBeVisible();
   },
 };
 

@@ -93,7 +93,7 @@ export function HomeContent({
 
       {/* Same width as the top bar (`max-w-page`). */}
       <div className="mx-auto column w-full max-w-page gap-6 lg:gap-10">
-        <h1 className="sr-only">Mural de Eventos</h1>
+        <h1 className="sr-only">Vem aí</h1>
 
         {errors.map((error) => error !== null && error !== "" && <ErrorAlert key={error}>{error}</ErrorAlert>)}
 

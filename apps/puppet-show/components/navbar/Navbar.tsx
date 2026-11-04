@@ -22,7 +22,7 @@ import type { ImageView, User } from "@/lib/api/schemas";
 import { Monogram } from "@/utils/monogram";
 
 /** The product's name, shown for the Superadmin (who belongs to no organization) and next to an org name. */
-export const APP_NAME = "Mural de Eventos";
+export const APP_NAME = "Vem aí";
 
 /** Organization shown in the bar; `logo` is `null` when it never had one. */
 export type NavBrand = { name: string; logo: ImageView | null };

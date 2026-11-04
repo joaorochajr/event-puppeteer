@@ -31,9 +31,9 @@ export const Tv: Story = {
 
 /** No site address configured: says what to set instead of a made-up code. */
 export const MissingSiteUrl: Story = {
-  args: { qr: { ok: false, error: "Endereço do site não configurado: defina NEXT_PUBLIC_SITE_URL para exibir o QR Code." } },
+  args: { qr: { ok: false, error: "Não foi possível descobrir o endereço do site: a requisição não informou o host." } },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole("alert")).toHaveTextContent("NEXT_PUBLIC_SITE_URL");
+    await expect(canvas.getByRole("alert")).toHaveTextContent("endereço do site");
     await expect(canvas.queryByRole("img")).toBeNull();
   },
 };

@@ -6,17 +6,17 @@
  */
 
 import type { Metadata } from "next";
-import { SiteQrCode } from "@/components/qrcode/siteQrCode";
+import { RequestSiteQrCode } from "@/components/qrcode/requestSiteQrCode";
 import { TvDisplayContainer } from "@/components/tv/TvDisplayContainer";
 
 export const metadata: Metadata = {
   title: "Modo TV | Vem aí",
 };
 
-/** Reads the site address on every request, so the QR code follows the configuration. */
+/** Reads the address from each request, so the QR code is always where the app is served. */
 export const dynamic = "force-dynamic";
 
 /** Builds the QR code on the server and hands it to the live display. */
 export default async function TvDisplayPage() {
-  return <TvDisplayContainer qr={await SiteQrCode(process.env.NEXT_PUBLIC_SITE_URL)} />;
+  return <TvDisplayContainer qr={await RequestSiteQrCode()} />;
 }

@@ -64,6 +64,11 @@ export const ResendVerificationBody = t.Object({
 });
 export type ResendVerificationInput = Static<typeof ResendVerificationBody>;
 
+export const VerifyEmailBody = t.Object({
+  token: t.String({ minLength: 1, description: 'Token from the emailed verification link' })
+});
+export type VerifyEmailInput = Static<typeof VerifyEmailBody>;
+
 export const RequestPasswordResetBody = t.Object({
   email: t.String({ format: 'email' })
 });

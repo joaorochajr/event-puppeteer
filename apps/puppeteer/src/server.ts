@@ -27,8 +27,8 @@ import {
   getScreeningPolicyHandler,
   setScreeningPolicyHandler
 } from './handlers/images.ts';
-import { UserSchema, RegisterBody, LoginBody, ChangeRoleBody, ResendVerificationBody, RequestPasswordResetBody, ResetPasswordBody } from './types/user.ts';
-import { registerHandler, loginHandler, meHandler, verifyEmailHandler, resendVerificationHandler, requestPasswordResetHandler, resetPasswordHandler } from './handlers/auth.ts';
+import { UserSchema, RegisterBody, LoginBody, ChangeRoleBody, ResendVerificationBody, VerifyEmailBody, RequestPasswordResetBody, ResetPasswordBody } from './types/user.ts';
+import { registerHandler, loginHandler, meHandler, verifyEmailHandler, confirmEmailHandler, resendVerificationHandler, requestPasswordResetHandler, resetPasswordHandler } from './handlers/auth.ts';
 import { listOrgUsersHandler, assignRoleHandler, removeUserHandler } from './handlers/users.ts';
 import { TagSchema, CreateTagBody, LinkLabelSchema, CreateLinkLabelBody } from './types/tag.ts';
 import { EventSchema, EventViewSchema, CreateEventBody, FeedEventSchema, EventWithVotesSchema } from './types/event.ts';
@@ -164,6 +164,10 @@ export function createServer(io: AppIO, { adapter, appUrl = 'http://localhost:30
       if (message === 'BAD_REQUEST') {
         set.status = 400;
         return { error: 'Bad Request' };
+      }
+      if (message === 'INVALID_VERIFICATION_TOKEN') {
+        set.status = 400;
+        return { error: 'Invalid or expired verification link' };
       }
       if (message === 'INVALID_RESET_TOKEN') {
         set.status = 400;
@@ -416,6 +420,21 @@ export function createServer(io: AppIO, { adapter, appUrl = 'http://localhost:30
               tags: ['Auth'],
               summary: 'Verify an email (link sent by email)',
               description: 'Redirects to the frontend login page with emailVerified=1, or emailVerified=0 when the token is invalid or expired.'
+            }
+          }
+        )
+        .post(
+          '/verify-email',
+          async ({ body, io }) => {
+            return await confirmEmailHandler(body, io);
+          },
+          {
+            body: VerifyEmailBody,
+            response: t.Object({ success: t.Literal(true) }),
+            detail: {
+              tags: ['Auth'],
+              summary: 'Verify an email with the token of the emailed link',
+              description: 'What the frontend page the link opens calls. 400 when the link is invalid or expired.'
             }
           }
         )

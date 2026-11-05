@@ -15,6 +15,7 @@ Todos os dados vêm da API **Puppeteer** (`apps/puppeteer`). O vocabulário do d
 | `/eventos/novo` | Publicar evento: o mesmo editor do painel. |
 | `/display` | Modo TV: relógio, QR code para o site e rotação de 3 em 3 eventos (15 s + 1 s por curtida na janela). |
 | `/entrar`, `/cadastro` | Login e cadastro com confirmação de e-mail. |
+| `/auth/verify-email` | Destino do link do e-mail de confirmação: envia o token à API (`POST /auth/verify-email`), diz se o e-mail foi confirmado e, se o link for inválido ou tiver expirado, pede o e-mail da conta para enviar um novo. |
 | `/esqueci-senha`, `/redefinir-senha` | Esqueci minha senha: a pessoa recebe por e-mail um link (válido por 1 hora, uso único) para escolher uma nova senha; as sessões abertas são encerradas. |
 | `/dashboard/...` | Painel: Meus Eventos; Denúncias, Imagens em Revisão, Usuários Banidos e Tags Sugeridas (Moderador+); Auditoria, Usuários, Dispositivos e Configurações, onde fica o logo (Admin+); Organizações, Dispositivos Órfãos, Tags e Links Globais, Imagens Escalonadas e Política de Triagem (Superadmin no contexto "Sistema Global"). O Superadmin troca de contexto pelo seletor no topo do menu, e a escolha fica salva. |
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { registerHandler, loginHandler, meHandler, verifyEmailHandler, resendVerificationHandler, requestPasswordResetHandler, resetPasswordHandler } from './auth.ts';
+import { registerHandler, loginHandler, meHandler, verifyEmailHandler, confirmEmailHandler, resendVerificationHandler, requestPasswordResetHandler, resetPasswordHandler } from './auth.ts';
 import { removeUserHandler } from './users.ts';
 import { createInMemoryIO } from '../io/in-memory.ts';
 import { organizationOf } from '../types/user.ts';
@@ -52,6 +52,17 @@ test('Auth Handlers', async (t) => {
 
     assert.deepEqual(await verifyEmailHandler('not-a-token', io), { verified: false });
     await assert.rejects(loginHandler({ email: body.email, password: body.password }, io), /EMAIL_NOT_VERIFIED/);
+  });
+
+  await t.test('confirmEmailHandler verifies with a valid token and refuses an invalid one', async () => {
+    const { io, orgId } = await setup();
+    await registerHandler(body, orgId, io);
+
+    await assert.rejects(confirmEmailHandler({ token: 'not-a-token' }, io), /INVALID_VERIFICATION_TOKEN/);
+    await assert.rejects(loginHandler({ email: body.email, password: body.password }, io), /EMAIL_NOT_VERIFIED/);
+
+    assert.deepEqual(await confirmEmailHandler({ token: verificationTokenFor(io, body.email) }, io), { success: true });
+    assert.ok((await loginHandler({ email: body.email, password: body.password }, io)).token);
   });
 
   await t.test('resending sends a new link only to unverified accounts', async () => {

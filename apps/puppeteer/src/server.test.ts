@@ -354,6 +354,22 @@ test('HTTP layer', async (t) => {
     assert.equal((await call('POST', '/auth/login', undefined, { email: account.email, password: 'wrong-password' })).status, 401);
   });
 
+  await t.test('POST /auth/verify-email answers JSON: 200 for a valid link, 400 for an invalid one', async () => {
+    const { io, orgId, call } = await setup();
+    const account = { firstName: 'Vera', lastName: 'Link', email: 'vera@a.com', password: 'secret-123' };
+    assert.equal((await call('POST', `/auth/register?orgId=${orgId}`, undefined, account)).status, 200);
+
+    const invalid = await call('POST', '/auth/verify-email', undefined, { token: 'nope' });
+    assert.equal(invalid.status, 400);
+    assert.equal(invalid.body.error, 'Invalid or expired verification link');
+    assert.equal((await call('POST', '/auth/login', undefined, { email: account.email, password: account.password })).status, 403);
+
+    const verified = await call('POST', '/auth/verify-email', undefined, { token: verificationTokenFor(io, account.email) });
+    assert.equal(verified.status, 200);
+    assert.deepEqual(verified.body, { success: true });
+    assert.equal((await call('POST', '/auth/login', undefined, { email: account.email, password: account.password })).status, 200);
+  });
+
   await t.test('GET /auth/me returns each User variant', async () => {
     const { io, orgId, adminToken, call } = await setup();
     await seedSuperadminHandler({ email: 'root@a.com', password: 'secret-123', firstName: 'S', lastName: 'A' }, io);
@@ -495,6 +511,7 @@ test('HTTP layer', async (t) => {
       'POST /auth/register',
       'POST /auth/login',
       'GET /auth/verify-email',
+      'POST /auth/verify-email',
       'POST /auth/resend-verification',
       'POST /auth/request-password-reset',
       'POST /auth/reset-password',

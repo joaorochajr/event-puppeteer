@@ -198,7 +198,7 @@ The version the Puppet reports (telemetry, logs, the Audit Trail) is the `VERSIO
 
 ## Running the Application: the Installation
 
-The Puppet installs itself (ADR-0001). Copy the one binary to the Device and run it as a normal user, with no arguments:
+The Puppet installs itself (ADR-0001). The complete walk-through, from the GitHub release to an approved Device, is in [docs/installation.md](docs/installation.md#step-by-step). Copy the one binary to the Device and run it as a normal user, with no arguments:
 
 ```bash
 ./puppet

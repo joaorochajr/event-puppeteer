@@ -19,8 +19,8 @@ A physical kiosk machine running the Puppet software. Belongs to an organization
 _Avoid_: Terminal, screen, display, node
 
 **Puppet**:
-The C application running on a Device. Controls the device hardware, sends telemetry to Puppeteer, receives commands and event feeds. Separate codebase from Puppeteer.
-_Avoid_: Agent, client, daemon
+The C application running on a Device. Enrolls the Device, sends heartbeats, logs and telemetry to Puppeteer, receives Commands and keeps the Organization's event feed. Separate codebase from Puppeteer (`apps/puppet`). Displaying the feed on screen is not implemented yet.
+_Avoid_: Agent, client, daemon (inside `apps/puppet`, "agent" names one process role of the Puppet, see its own `CONTEXT.md`)
 
 **User**:
 A person registered within an organization. Can create events, vote, and report. Authenticated via email and password.
@@ -118,9 +118,17 @@ _Avoid_: Registration, pairing, provisioning
 Device health and status data sent from Puppet to Puppeteer. Includes continuous heartbeats/logs and on-demand detailed info (CPU, memory, disk, network, HDMI, screen state, OS details, process metrics, connection history, uptime, restarts, crashes).
 _Avoid_: Metrics, diagnostics, monitoring data
 
+**Heartbeat**:
+The signal a Device sends every 20 seconds to say it is alive, with the errors it logged since the last one. A Device whose last heartbeat is older than 60 seconds is offline. The answer tells whether the Device has Commands waiting.
+_Avoid_: Ping, keep-alive, check-in
+
 **Command**:
-An instruction sent from Puppeteer to a Puppet device (restart, shutdown, binary update, open SSH connection, etc.). Enables full remote device management.
+An instruction sent from Puppeteer to a Puppet device (restart, shutdown, binary update, request for telemetry, open SSH connection, etc.). Enables full remote device management. Its status goes `pending`, `sent`, `acknowledged`, then `completed` or `failed`; it is redelivered while `sent` until the Device acknowledges it.
 _Avoid_: Action, instruction, directive
+
+**Update binary**:
+A Puppet executable sent by an Admin to a Device through an `update` Command. It is stored privately, never public by URL; the Device downloads it through a short-lived signed address and installs it only if its SHA-256 and architecture match.
+_Avoid_: Firmware, patch, release
 
 **Wake-up**:
 A notice from Puppeteer to a Device that it has a Command waiting. It carries no Command content and travels one way only, from Puppeteer to the Puppet; the Puppet answers by fetching its pending Commands as usual. A missed Wake-up delays a Command but never loses it.

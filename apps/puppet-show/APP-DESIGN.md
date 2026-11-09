@@ -12,7 +12,7 @@ A deployment serves **one Organization**, chosen with `NEXT_PUBLIC_ORG_ID`: it i
 
 - **Public Feed, "Mural" (`/`)**: all non-hidden events of the Organization.
   - Search, and filters: Todos, Mais próximos, Mais curtidos and one pill per official Tag.
-  - Event cards with date, time, place, tags and likes. A like shows at once and is confirmed by the server; the feed reloads every 5 s while the tab is visible (the API has no push).
+  - Event cards with date, time, place, tags and likes. Without a banner a card shows a date tile in the Organization's gradient and the start of the description instead of the photo. A like shows at once and is confirmed by the server; the feed reloads every 5 s while the tab is visible (the API has no push).
   - A QR code to the site.
 - **Event details (`/eventos/[id]`)**: summary, multi-day schedule, map (OpenStreetMap), labeled external links, like, share and report (reason plus optional comment). The author can delete the event and Moderators and above can hide or unhide it.
   - Link preview: title, the Approved banner or, without one, a generated 1200×630 picture from `/eventos/[id]/capa`. Only what the public can see is exposed; anything else answers 404.
@@ -66,7 +66,7 @@ flowchart TD
 
 ### 4.1 Member
 
-- **Meus Eventos (`/dashboard/events`)**: events the user created, with soft deletion and status. Creating and editing happens in a side drawer in three steps (Informações; Programação; Tags, links e banner), each validated with Zod before moving on.
+- **Meus Eventos (`/dashboard/events`)**: events the user created, with soft deletion and status. Creating and editing happens in a side drawer in three steps (Informações; Programação; Tags, links e banner), each validated with Zod before moving on. The place is picked on an OpenStreetMap (a click sets the marker, dragging adjusts it), typed as coordinates or taken from the device's position.
   - **Banner**: picked from the device, cropped to 16:9 in the browser and uploaded once the event exists. The creator changes or removes it on the event page. Until the banner is Approved, everyone else sees its blurred Placeholder (thumbhash).
 
 ### 4.2 Moderator

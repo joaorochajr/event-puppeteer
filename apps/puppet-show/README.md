@@ -10,9 +10,9 @@ O site se chama **Vem aí** na interface. Todos os dados vêm da API **Puppeteer
 
 | Rota | O que faz |
 |---|---|
-| `/` | Mural: busca, filtros (Todos, Mais próximos, Mais curtidos e uma pílula por tag oficial), cards com data, horário, local, tags e curtidas. O mural é recarregado a cada 5 s enquanto a aba está visível (a API não tem push), e a curtida aparece na hora e é confirmada pelo servidor. |
+| `/` | Mural: busca, filtros (Todos, Mais próximos, Mais curtidos e uma pílula por tag oficial), cards com data, horário, local, tags e curtidas (sem banner, o card troca a foto por um bloco de data no degradê da organização e mostra o começo da descrição). O mural é recarregado a cada 5 s enquanto a aba está visível (a API não tem push), e a curtida aparece na hora e é confirmada pelo servidor. |
 | `/eventos/[id]` | Detalhes: programação de vários dias, mapa (OpenStreetMap), links (ex.: Inscrição), curtir, compartilhar, denunciar; o autor pode excluir e Moderadores+ podem ocultar ou reexibir. A página traz a prévia de link do evento (título, banner aprovado ou, sem banner, a imagem gerada em `/eventos/[id]/capa`, 1200×630). |
-| `/eventos/novo` | Publicar evento: o mesmo editor do painel. |
+| `/eventos/novo` | Publicar evento: o mesmo editor do painel, em três etapas. O local se escolhe num mapa do OpenStreetMap (clique para pôr o marcador, arraste para ajustar), ou digitando as coordenadas, ou pela posição do dispositivo. |
 | `/display` | Modo TV, em layout "bento" de 1920×1080: um evento em destaque por vez, com o banner ao lado, por 15 s mais 1 s por curtida (os mais relevantes voltam entre os outros); "Hoje", a agenda dos próximos eventos, a contagem dos próximos sete dias e o QR code para o site. O feed é recarregado a cada 30 s. |
 | `/entrar`, `/cadastro` | Login e cadastro com confirmação de e-mail. |
 | `/auth/verify-email` | Destino do link do e-mail de confirmação: envia o token à API (`POST /auth/verify-email`), diz se o e-mail foi confirmado e, se o link for inválido ou tiver expirado, pede o e-mail da conta para enviar um novo. |

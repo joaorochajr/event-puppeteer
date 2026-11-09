@@ -114,12 +114,16 @@ flowchart TD
     download -->|"HTTP not 2xx / curl error"| discard["discardStaged()"]:::danger
     download -->|cannot open file| eFile["cannot write update"]:::danger
     download --> hash{"SHA-256 matches?"}
+    hash -->|"staged file unreadable"| e4003["4003 staged file unreadable"]:::danger
     hash -->|no| e4004["4004 digest mismatch"]:::danger
     hash -->|yes| magic{"ELF magic?"}
     magic -->|no| e4005["4005 not an executable"]:::danger
-    magic -->|yes| arch{"Same class, byte order,<br/>version and e_machine?"}
+    magic -->|yes| running{"/proc/self/exe readable?"}
+    running -->|no| e4007["4007 running executable unreadable"]:::danger
+    running -->|yes| arch{"Same class, byte order,<br/>version and e_machine?"}
     arch -->|no| e4006["4006 architecture mismatch"]:::danger
     arch -->|yes| install["chmod 0755, fsync,<br/>rename, fsync directory"]:::core
+    install -->|"chmod or fsync fails"| e4008["4008 preparation failed"]:::danger
     install -->|rename fails| e4009["4009 replace failed"]:::danger
     install --> success(["complete success, execv"]):::ok
     classDef core fill:#e0e7ff,stroke:#6366f1,color:#1e293b
@@ -207,7 +211,7 @@ packet-beta
 
 ## Command risk
 
-Why update and shutdown get the most safeguards.
+Why update and shutdown get the most safeguards. The positions are a judgment, not a measurement.
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {'quadrant1Fill': '#fee2e2', 'quadrant2Fill': '#fef3c7', 'quadrant3Fill': '#d1fae5', 'quadrant4Fill': '#e0e7ff', 'quadrantPointFill': '#4f46e5', 'quadrantTitleFill': '#1e293b', 'quadrant1TextFill': '#7f1d1d', 'quadrant2TextFill': '#78350f', 'quadrant3TextFill': '#064e3b', 'quadrant4TextFill': '#312e81', 'quadrantPointTextFill': '#1e293b', 'quadrantXAxisTextFill': '#334155', 'quadrantYAxisTextFill': '#334155',

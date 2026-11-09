@@ -101,7 +101,7 @@ flowchart TD
 
 ## Cadence of an active Device
 
-Intervals after approval: status 60 s, heartbeat 20 s (Puppeteer marks a Device offline after 60 s of silence), feed 300 s. Commands have no timer: they are fetched when the Device becomes active, whenever a heartbeat answer says some are waiting, whenever a Wake-up is heard and after every (re)subscription to the broker ([Wake-ups](wakeup.md)).
+Intervals after approval: status 60 s, heartbeat 20 s (Puppeteer marks a Device offline after 60 s of silence), feed 300 s. The timings of the Commands and broker rows are illustrative: the fetch after subscribing follows the broker handshake. Commands have no timer: they are fetched at start and when the Device becomes active, whenever a heartbeat answer says some are waiting, whenever a Wake-up is heard and after every (re)subscription to the broker ([Wake-ups](wakeup.md)).
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {

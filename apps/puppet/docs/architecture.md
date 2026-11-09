@@ -326,7 +326,7 @@ flowchart LR
 
 ## Telemetry mapping
 
-How the `stats` snapshot becomes the `DeviceTelemetry` JSON answered to a `request_telemetry` Command. Empty strings are omitted so they never overwrite a previous report.
+How the `stats` snapshot becomes the `DeviceTelemetry` JSON answered to a `request_telemetry` Command. `cpuUsage` is measured but not sent. Empty strings are omitted so they never overwrite a previous report.
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {
@@ -346,6 +346,8 @@ flowchart LR
         rss["appMemoryUsage"]:::core
         uptime["uptime"]:::core
         os["osName + osVersion"]:::core
+        kernel["kernelVersion"]:::core
+        user["username"]:::core
         ip["ip"]:::core
     end
     subgraph json["DeviceTelemetry JSON"]
@@ -356,6 +358,8 @@ flowchart LR
         puppetMemory["puppetMemoryUsage"]:::store
         uptimeOut["uptime"]:::store
         osVersion["osVersion"]:::store
+        kernelOut["kernelVersion"]:::store
+        osUsers["osUsers"]:::store
         network["networkInfo"]:::store
     end
     temp --> cpuTemp
@@ -364,6 +368,8 @@ flowchart LR
     rss --> puppetMemory
     uptime --> uptimeOut
     os --> osVersion
+    kernel --> kernelOut
+    user --> osUsers
     ip --> network
     build[/"PUPPET_VERSION, start time"/]:::shell --> extras["puppetVersion, puppetStartTime"]:::store
     classDef core fill:#e0e7ff,stroke:#6366f1,color:#1e293b

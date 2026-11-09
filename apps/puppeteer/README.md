@@ -58,6 +58,30 @@ Handlers hold the rules and have no hidden side effects. The HTTP layer assemble
 5. **The shell** is `src/server.ts`, which maps routes to handlers and errors to HTTP statuses.
 6. **Tests** call handlers directly with the in-memory IO and assert the response and the state of the in-memory stores. No HTTP server is started for them (`src/server.test.ts` is the exception: it checks the routes themselves).
 
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#e0e7ff', 'primaryTextColor': '#1e293b',
+  'primaryBorderColor': '#6366f1', 'lineColor': '#94a3b8',
+  'secondaryColor': '#d1fae5', 'tertiaryColor': '#fef3c7',
+  'background': '#ffffff', 'mainBkg': '#eef2ff', 'nodeBorder': '#a5b4fc',
+  'clusterBkg': '#f8fafc', 'clusterBorder': '#e2e8f0',
+  'titleColor': '#1e293b', 'edgeLabelBackground': '#ffffff', 'textColor': '#334155'
+}}}%%
+flowchart LR
+    request(["HTTP request"]):::external --> server["server.ts<br/>routes, schemas, error mapping"]:::shell
+    server --> handler["handlers/*<br/>the rules: (request, io) -> response"]:::core
+    handler --> io["AppIO<br/>interfaces in io/index.ts"]:::core
+    io --> real["Real IO<br/>Drizzle, Brevo, Cloudinary,<br/>Sightengine, OpenAI, Blob, MQTT"]:::shell
+    io -.-> memory["In-memory IO<br/>tests only"]:::store
+    tests(["Tests"]):::ok --> handler
+    tests --> memory
+    classDef core fill:#e0e7ff,stroke:#6366f1,color:#1e293b
+    classDef shell fill:#fef3c7,stroke:#f59e0b,color:#78350f
+    classDef store fill:#d1fae5,stroke:#10b981,color:#064e3b
+    classDef external fill:#f1f5f9,stroke:#94a3b8,color:#334155
+    classDef ok fill:#d1fae5,stroke:#10b981,color:#064e3b
+```
+
 ### Source layout
 
 | Path | What is in it |
@@ -96,6 +120,63 @@ The OpenAPI spec is the complete and current reference.
 
 ## Devices, Commands and Wake-ups
 
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#e0e7ff', 'primaryTextColor': '#1e293b',
+  'primaryBorderColor': '#6366f1', 'lineColor': '#94a3b8',
+  'secondaryColor': '#d1fae5', 'tertiaryColor': '#fef3c7',
+  'background': '#ffffff', 'mainBkg': '#eef2ff', 'nodeBorder': '#a5b4fc',
+  'clusterBkg': '#f8fafc', 'clusterBorder': '#e2e8f0',
+  'titleColor': '#1e293b', 'edgeLabelBackground': '#ffffff', 'textColor': '#334155'
+}}}%%
+stateDiagram-v2
+    direction LR
+    state "Device" as device {
+        [*] --> pending : POST /devices/connect
+        pending --> active : approved with name and location
+        pending --> rejected : rejected
+    }
+    state "Command" as command {
+        state "pending" as cmdPending
+        [*] --> cmdPending : Admin issues it
+        cmdPending --> sent : fetched by the Device
+        sent --> sent : not acknowledged, redelivered
+        sent --> acknowledged : ack
+        acknowledged --> completed : complete success
+        acknowledged --> failed : complete failure
+    }
+```
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#4f46e5', 'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#3730a3', 'lineColor': '#94a3b8',
+  'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b',
+  'background': '#ffffff', 'mainBkg': '#f8fafc',
+  'nodeBorder': '#cbd5e1', 'clusterBkg': '#f1f5f9',
+  'clusterBorder': '#e2e8f0', 'titleColor': '#1e293b',
+  'edgeLabelBackground': '#ffffff', 'textColor': '#334155',
+  'actorBkg': '#4f46e5', 'actorBorder': '#3730a3', 'actorTextColor': '#ffffff',
+  'signalColor': '#64748b', 'signalTextColor': '#334155',
+  'noteBkgColor': '#fef3c7', 'noteBorderColor': '#f59e0b', 'noteTextColor': '#78350f'
+}}}%%
+sequenceDiagram
+    autonumber
+    actor admin as Admin
+    participant api as Puppeteer
+    participant broker as MQTT broker
+    participant puppet as Puppet
+
+    admin->>api: POST .../devices/:id/commands
+    api->>api: store the Command (pending)
+    api->>broker: publish an empty Wake-up
+    api-->>admin: Command + wakeup {sent}
+    broker-->>puppet: Wake-up
+    puppet->>api: GET /devices/:id/commands/pending
+    api-->>puppet: Commands (now sent)
+    Note over puppet,api: Missed Wake-up? The next heartbeat answer<br/>carries commandsWaiting = true
+```
+
 - **Enrollment** (ADR 0002): `POST /devices/connect` creates a `pending` Device and answers a token. The Superadmin approves it into any Organization; an Admin approves it only into their own, when the Device named no other. Approving gives it a name and location, and only an `active` Device is handed Commands.
 - **Heartbeat**: `POST /devices/:id/heartbeat` records liveness and recent errors. The Puppet sends one every 20 s. A Device is online when its last heartbeat is under 60 s old.
 - **Commands** (`restart`, `shutdown`, `update`, `open_ssh`, `custom`, `request_telemetry`) are issued by Admins. Status goes `pending` → `sent` (handed to the Device, and redelivered until it acknowledges: delivery is at-least-once) → `acknowledged` → `completed` or `failed`. The Puppet runs `restart`, `shutdown`, `update` and `request_telemetry`; the others are reported back as failed.
@@ -105,13 +186,39 @@ The OpenAPI spec is the complete and current reference.
 
 ## Email verification and password reset
 
-New accounts must confirm their email before logging in (`POST /auth/login` answers 403 until then). Registration sends a link to `GET /auth/verify-email`, which marks the email as verified and redirects to `$APP_URL/login?emailVerified=1` (or `0` for an invalid or expired link). `POST /auth/resend-verification` sends a new link. Emails go through Brevo; without a key outside production they are printed to the console.
+New accounts must confirm their email before logging in (`POST /auth/login` answers 403 until then). Registration sends a link to `GET /auth/verify-email`, which marks the email as verified and redirects to `$APP_URL/login?emailVerified=1` (or `0` for an invalid or expired link). The frontend page the link opens (`/auth/verify-email` on the app's own domain) confirms through `POST /auth/verify-email` with `{ token }`, which answers 200, or 400 for an invalid or expired link. `POST /auth/resend-verification` sends a new link. Emails go through Brevo; without a key outside production they are printed to the console.
 
 Forgotten passwords: `POST /auth/request-password-reset` (always answers success, so it does not reveal accounts) emails a link to `$APP_URL/redefinir-senha?token=…`, valid for 60 minutes. `POST /auth/reset-password` with that token and the new password sets it once and ends every session of the account. Removed accounts never get a link and cannot log in again through one.
 
 ## Images (banners and logos)
 
 Event banners (16:9, at least 960×540) and Organization logos (1:1, at least 256×256) are uploaded as multipart `file` to `PUT /organizations/:id/events/:eventId/banner` and `PUT /organizations/:id/logo`, never set as URLs. Each upload is normalized with `sharp` (EXIF orientation applied, metadata stripped, re-encoded as WebP, scaled down to 1920×1080 or 512×512 when larger), screened, given a thumbhash (the Placeholder), and stored in Cloudinary as an `authenticated` asset. A User may upload at most 10 Images per day. See [CONTEXT.md](CONTEXT.md) for the vocabulary and ADRs 0003 and 0004 for the decisions.
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#e0e7ff', 'primaryTextColor': '#1e293b',
+  'primaryBorderColor': '#6366f1', 'lineColor': '#94a3b8',
+  'secondaryColor': '#d1fae5', 'tertiaryColor': '#fef3c7',
+  'background': '#ffffff', 'mainBkg': '#eef2ff', 'nodeBorder': '#a5b4fc',
+  'clusterBkg': '#f8fafc', 'clusterBorder': '#e2e8f0',
+  'titleColor': '#1e293b', 'edgeLabelBackground': '#ffffff', 'textColor': '#334155'
+}}}%%
+flowchart TD
+    upload(["Multipart upload"]):::external --> prepare["Normalize with sharp<br/>WebP, no metadata, scaled down,<br/>thumbhash (Placeholder)"]:::shell
+    prepare --> screen{"Screening: Sightengine + OpenAI,<br/>most severe score vs the Screening Policy"}
+    screen -->|"below review cut-off"| approved(["Approved"]):::ok
+    screen -->|"between cut-offs, no policy yet<br/>or Screening failed"| review["In Image Review<br/>(not screened when it failed)"]:::shell
+    screen -->|"above reject cut-off"| rejected(["Rejected<br/>uploader is not told"]):::danger
+    review -->|"Moderator, Admin or Superadmin<br/>(never the uploader) approves"| approved
+    review -->|"human rejects"| confirmed(["Confirmed Rejection<br/>uploader is Shadow Banned"]):::danger
+    approved --> viewers["Everyone sees it"]:::ok
+    review --> others["Others see the Placeholder,<br/>the uploader sees it as published"]:::core
+    classDef core fill:#e0e7ff,stroke:#6366f1,color:#1e293b
+    classDef shell fill:#fef3c7,stroke:#f59e0b,color:#78350f
+    classDef external fill:#f1f5f9,stroke:#94a3b8,color:#334155
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
+    classDef ok fill:#d1fae5,stroke:#10b981,color:#064e3b
+```
 
 - Screening combines Sightengine and OpenAI omni-moderation (the most severe score wins) against the Screening Policy (`GET`/`PUT /screening-policy`, Superadmin). Until a policy is set, and whenever Screening fails, Images wait in Image Review.
 - Image Review: `GET /organizations/:id/image-reviews` (Moderator+), `GET /image-reviews/escalated` (Superadmin), `POST /image-reviews/:imageId/approve|reject`. Nobody reviews their own Image; a rejection there shadow-bans the uploader.

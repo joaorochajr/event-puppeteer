@@ -6,6 +6,31 @@ Fluxos reais do puppet-show contra a **API Puppeteer real**, sem nada simulado:
 - `run.ts` espera a API e o front responderem, roda todos os `specs/*.spec.ts` com `node --test` e derruba a pilha no final.
 - Os specs usam a biblioteca `playwright` (sem `@playwright/test`) e os helpers de `support.ts`.
 
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#e0e7ff', 'primaryTextColor': '#1e293b',
+  'primaryBorderColor': '#6366f1', 'lineColor': '#94a3b8',
+  'secondaryColor': '#d1fae5', 'tertiaryColor': '#fef3c7',
+  'background': '#ffffff', 'mainBkg': '#eef2ff', 'nodeBorder': '#a5b4fc',
+  'clusterBkg': '#f8fafc', 'clusterBorder': '#e2e8f0',
+  'titleColor': '#1e293b', 'edgeLabelBackground': '#ffffff', 'textColor': '#334155'
+}}}%%
+flowchart LR
+    run["run.ts<br/>espera a pilha, roda os specs,<br/>derruba tudo no final"]:::shell --> server
+    subgraph pilha["Pilha de teste (portas E2E_API_PORT e E2E_WEB_PORT)"]
+        server["server.ts"]:::shell --> api["API Puppeteer real<br/>(apps/puppeteer)"]:::core
+        api --- db[("Postgres em memória<br/>PGlite")]:::store
+        server --> web["next dev<br/>apontado para a API"]:::core
+        server -->|"seed pelo HTTP da API"| api
+    end
+    run -->|"node --test specs/*.spec.ts"| specs["specs<br/>playwright, desktop e mobile"]:::ok
+    specs --> web
+    classDef core fill:#e0e7ff,stroke:#6366f1,color:#1e293b
+    classDef shell fill:#fef3c7,stroke:#f59e0b,color:#78350f
+    classDef store fill:#d1fae5,stroke:#10b981,color:#064e3b
+    classDef ok fill:#d1fae5,stroke:#10b981,color:#064e3b
+```
+
 ## Rodar
 
 ```bash

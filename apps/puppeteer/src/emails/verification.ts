@@ -1,19 +1,15 @@
 import type { EmailMessage } from '../io/index.ts';
+import { renderEmail } from './layout.ts';
 
-const escapeHtml = (value: string) =>
-  value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-
-export function verificationEmail(to: { email: string; name: string }, link: string): EmailMessage {
-  const name = escapeHtml(to.name);
-  const href = escapeHtml(link);
-  return {
-    to,
-    subject: 'Confirme seu email',
-    text: `Olá, ${to.name}!\n\nConfirme seu email para ativar sua conta:\n${link}\n\nSe você não criou uma conta, ignore este email.`,
-    html: `<p>Olá, ${name}!</p>
-<p>Confirme seu email para ativar sua conta:</p>
-<p><a href="${href}">Confirmar email</a></p>
-<p>Se o botão não funcionar, copie este link no navegador:<br>${href}</p>
-<p>Se você não criou uma conta, ignore este email.</p>`
-  };
+/** Email with the link that confirms the address and activates the account. */
+export function verificationEmail(to: { email: string; name: string }, link: string, appUrl: string): EmailMessage {
+  const { html, text } = renderEmail({
+    appUrl,
+    preheader: 'Falta só um passo para ativar a sua conta.',
+    heading: 'Confirme seu e-mail',
+    paragraphs: [`Olá, ${to.name}!`, 'Confirme o seu e-mail para ativar a sua conta.'],
+    button: { label: 'Confirmar e-mail', href: link },
+    note: 'Se você não criou uma conta, ignore este e-mail.'
+  });
+  return { to, subject: 'Confirme seu email', text, html };
 }

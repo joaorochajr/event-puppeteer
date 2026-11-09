@@ -46,7 +46,7 @@ export function createAuth({ db, emailSender, apiUrl, appUrl, secret, useSecureC
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, token }) => {
         const link = `${appUrl.replace(/\/$/, '')}/redefinir-senha?token=${encodeURIComponent(token)}`;
-        await emailSender.send(passwordResetEmail({ email: user.email, name: user.name }, link, PASSWORD_RESET_VALID_MINUTES));
+        await emailSender.send(passwordResetEmail({ email: user.email, name: user.name }, link, PASSWORD_RESET_VALID_MINUTES, appUrl));
       }
     },
     emailVerification: {
@@ -55,7 +55,7 @@ export function createAuth({ db, emailSender, apiUrl, appUrl, secret, useSecureC
       sendOnSignIn: false,
       sendVerificationEmail: async ({ user, token }) => {
         const link = `${apiUrl.replace(/\/$/, '')}/auth/verify-email?token=${encodeURIComponent(token)}`;
-        await emailSender.send(verificationEmail({ email: user.email, name: user.name }, link));
+        await emailSender.send(verificationEmail({ email: user.email, name: user.name }, link, appUrl));
       }
     },
     advanced: { useSecureCookies },

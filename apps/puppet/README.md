@@ -2,7 +2,30 @@
 
 The C application running on kiosk Devices. It enrolls itself with Puppeteer, waits for approval, then keeps the Device's event feed up to date, sends heartbeats, logs and Telemetry, and executes Commands sent by Admins. Built with CMake, using Tencent's MMKV for persistence, libcurl for HTTP(S) and libmosquitto to hear Wake-ups over MQTT.
 
+Deeper documentation, with Mermaid diagrams of the architecture, the agent loop, the Installation, Wake-ups, the protocol and self-update, is in [docs/](docs/README.md).
+
 ## What it does
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#e0e7ff', 'primaryTextColor': '#1e293b',
+  'primaryBorderColor': '#6366f1', 'lineColor': '#94a3b8',
+  'secondaryColor': '#d1fae5', 'tertiaryColor': '#fef3c7',
+  'background': '#ffffff', 'mainBkg': '#eef2ff', 'nodeBorder': '#a5b4fc',
+  'clusterBkg': '#f8fafc', 'clusterBorder': '#e2e8f0',
+  'titleColor': '#1e293b', 'edgeLabelBackground': '#ffffff', 'textColor': '#334155'
+}}}%%
+stateDiagram-v2
+    direction LR
+    [*] --> Unenrolled : no stored credentials
+    [*] --> Pending : credentials in MMKV
+    Unenrolled --> Pending : POST /devices/connect
+    Pending --> Active : approved
+    Pending --> Rejected : rejected
+    Active --> Unenrolled : HTTP 401
+    Pending --> Unenrolled : HTTP 401
+    Rejected --> Unenrolled : HTTP 401
+```
 
 1. **Enrollment** (ADR-0002): on first start it calls `POST /devices/connect` and stores the issued credentials. The Device then appears in the Superadmin's pending queue.
 2. **Pending**: it checks its status every 15 s and sends heartbeats, waiting indefinitely without flooding Puppeteer.

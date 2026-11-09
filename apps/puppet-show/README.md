@@ -26,7 +26,7 @@ Copie `.env.example` para `.env` e preencha:
 |---|---|---|
 | `PUPPETEER_URL` | sim | URL da API. O Next encaminha `/api/*` para ela (sem CORS). Sem ela o app não inicia. |
 | `NEXT_PUBLIC_ORG_ID` | sim | Organização que visitantes veem (mural, Modo TV) e na qual os cadastros entram. |
-| `NEXT_PUBLIC_SITE_URL` | sim | Endereço público do site, usado nos QR codes. |
+| `NEXT_PUBLIC_SITE_URL` | sim | Endereço público do site, usado nas prévias de link dos eventos. O QR Code não depende dele: usa o endereço de onde o app está sendo servido. |
 
 ## Comandos
 

@@ -1,5 +1,5 @@
 import type { AppIO } from '../io/index.ts';
-import type { RegisterInput, LoginInput, NewUser, User, ResendVerificationInput, RequestPasswordResetInput, ResetPasswordInput } from '../types/user.ts';
+import type { RegisterInput, LoginInput, NewUser, User, ResendVerificationInput, VerifyEmailInput, RequestPasswordResetInput, ResetPasswordInput } from '../types/user.ts';
 import { normalizeName } from '../utils/normalize.ts';
 import { requireAuth } from './users.ts';
 
@@ -28,6 +28,16 @@ export async function registerHandler(body: RegisterInput, orgId: string, io: Ap
 
 export async function verifyEmailHandler(token: string, io: AppIO) {
   return { verified: await io.auth.verifyEmail(token) };
+}
+
+/**
+ * Confirms an email with the token from the emailed link, for the frontend page the
+ * link opens (the GET route above redirects instead).
+ * @throws INVALID_VERIFICATION_TOKEN when the token is invalid or expired.
+ */
+export async function confirmEmailHandler(body: VerifyEmailInput, io: AppIO) {
+  if (!(await io.auth.verifyEmail(body.token))) throw new Error('INVALID_VERIFICATION_TOKEN');
+  return { success: true as const };
 }
 
 export async function resendVerificationHandler(body: ResendVerificationInput, io: AppIO) {

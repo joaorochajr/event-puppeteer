@@ -23,7 +23,7 @@ This project follows the **Functional Core / Imperative Shell** pattern to make 
 
 ### Email verification
 
-New accounts must confirm their email before logging in (`POST /auth/login` answers 403 until then). Registration sends a link to `GET /auth/verify-email`, which marks the email as verified and redirects to `$APP_URL/login?emailVerified=1` (or `0` for an invalid/expired link). `POST /auth/resend-verification` sends a new link. Emails go through Brevo (`BREVO_API_KEY`, `EMAIL_FROM`); without a key outside production they are printed to the console. The Superadmin seed creates an already-verified account.
+New accounts must confirm their email before logging in (`POST /auth/login` answers 403 until then). Registration sends a link to `GET /auth/verify-email`, which marks the email as verified and redirects to `$APP_URL/login?emailVerified=1` (or `0` for an invalid/expired link). The frontend page the link opens (`/auth/verify-email` on the app's own domain) confirms through `POST /auth/verify-email` with `{ token }`, which answers 200, or 400 for an invalid or expired link. `POST /auth/resend-verification` sends a new link. Emails go through Brevo (`BREVO_API_KEY`, `EMAIL_FROM`); without a key outside production they are printed to the console. The Superadmin seed creates an already-verified account.
 
 Forgotten passwords: `POST /auth/request-password-reset` (always answers success, so it doesn't reveal accounts) emails a link to `$APP_URL/redefinir-senha?token=…`, valid for 60 minutes. `POST /auth/reset-password` with that token and the new password sets it once and ends every session of the account. Removed accounts never get a link and can't log in again through one.
 

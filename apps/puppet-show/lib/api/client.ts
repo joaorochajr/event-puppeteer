@@ -174,6 +174,9 @@ export const api = {
     /** 401 = wrong email/password; 403 = email not verified yet. */
     login: (body: { email: string; password: string }) => Request(LoginResponseSchema, "POST", "/auth/login", body),
 
+    /** Confirms an email with the token of the emailed link. 400 = invalid or expired link. */
+    verifyEmail: (token: string) => Request(SuccessSchema, "POST", "/auth/verify-email", { token }),
+
     /** Always succeeds, whether or not the email exists (doesn't reveal accounts). */
     resendVerification: (email: string) => Request(SuccessSchema, "POST", "/auth/resend-verification", { email }),
 

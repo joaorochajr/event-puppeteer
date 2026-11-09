@@ -7,7 +7,7 @@
 
 import { after, describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { CloseBrowser, HasHorizontalScroll, LoginAs, OpenPage, Outbox, WEB } from "../support.ts";
+import { Api, CloseBrowser, HasHorizontalScroll, LoginAs, OpenPage, Outbox, State, WEB } from "../support.ts";
 import { E2E } from "../config.ts";
 
 after(CloseBrowser);
@@ -55,9 +55,10 @@ describe("Público: login e cadastro", () => {
     const message = (await Outbox()).findLast((m) => m.to.email === email);
     const link = message?.text.match(/https?:\/\/\S+verify-email\?token=\S+/)?.[0];
     assert.ok(link, "verification email has a link");
-    await page.goto(link.replace(/^https?:\/\/[^/]+/, `http://localhost:${E2E.apiPort}`));
-    await page.waitForURL((url) => url.pathname === "/entrar" && url.searchParams.get("emailVerified") === "1");
-    await page.getByRole("status").filter({ hasText: "E-mail confirmado, faça login." }).waitFor();
+    await page.goto(link.replace(/^https?:\/\/[^/]+/, WEB));
+    await page.getByRole("status").filter({ hasText: "E-mail confirmado." }).waitFor();
+    await page.getByRole("link", { name: "Ir para o login" }).click();
+    await page.waitForURL((url) => url.pathname === "/entrar");
 
     await page.getByLabel("E-mail").fill(email);
     await page.getByLabel("Senha").fill(E2E.password);
@@ -67,6 +68,27 @@ describe("Público: login e cadastro", () => {
     await page.locator("p", { hasText: "Olá, Nina" }).waitFor();
 
     assert.deepEqual(Unexpected(errors, [403]), []);
+    await context.close();
+  });
+
+  test("link de confirmação inválido é explicado e permite pedir um novo", async () => {
+    const email = `link.${Date.now()}@e2e.test`;
+    const { page, context, errors } = await OpenPage("desktop");
+    const { orgA } = await State();
+    await Api(null, "POST", `/auth/register?orgId=${orgA.id}`, { firstName: "Lia", lastName: "Link", email, password: E2E.password });
+
+    await page.goto(`${WEB}/auth/verify-email?token=invalido`);
+    await page.getByRole("alert").filter({ hasText: "Este link é inválido ou expirou." }).waitFor();
+    const before = (await Outbox()).filter((message) => message.to.email === email).length;
+    await page.getByLabel("E-mail", { exact: true }).fill(email);
+    await page.getByRole("button", { name: "Enviar novo link" }).click();
+    await page.getByRole("status").filter({ hasText: "enviamos um novo link de confirmação" }).waitFor();
+    assert.equal((await Outbox()).filter((message) => message.to.email === email).length, before + 1);
+
+    await page.goto(`${WEB}/auth/verify-email`);
+    await page.getByRole("alert").filter({ hasText: "O link de confirmação está incompleto." }).waitFor();
+
+    assert.deepEqual(Unexpected(errors, [400]), []);
     await context.close();
   });
 
